@@ -1,6 +1,6 @@
 type WinningBoard = {
     board: string[],
-    input: Number[],
+    input: number[],
     lastRound: number
 }
 
@@ -40,7 +40,7 @@ console.log("Number of boards", boards.length)
 input.reduce((acc, item) => {
     const totalInput = [...acc, Number(item)]
 
-    boards.forEach((board, index) => {
+    boards.forEach((board) => {
         if (checker === false) { 
             const check = checkWinningBoard(totalInput, board)
             check && console.log(board, totalInput)
@@ -56,13 +56,13 @@ input.reduce((acc, item) => {
     })
 
     return totalInput
-}, [] as Number[])
+}, [] as number[])
 
 // If we have a winningBoard, gather all numbers. Find the unmarked numbers
 // and multiply this by the number of the last round
 if (winningBoard?.board && winningBoard?.input && winningBoard?.lastRound) {
     const numbers = winningBoard.board.reduce((acc, row) => {
-        let copy = [...acc]
+        const copy = [...acc]
         const rowItems = row.split(" ").filter(item => item !== "")
         rowItems.forEach(item => copy.push(Number(item)))
 
@@ -77,7 +77,7 @@ if (winningBoard?.board && winningBoard?.input && winningBoard?.lastRound) {
     console.log("FINAL", sum * winningBoard.lastRound)
 }
 
-function checkWinningBoard(numbers: Number[], boardLines:string[]) {
+function checkWinningBoard(numbers: number[], boardLines:string[]) {
     let match = false;
     boardLines.forEach(item => {
         if (match === false) {

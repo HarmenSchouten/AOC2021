@@ -1,13 +1,8 @@
 type WinningBoard = {
     board: string[],
-    input: Number[],
+    input: number[],
     lastRound: number
 }
-
-// Define the global checker
-let checker = false;
-
-let winningBoard:WinningBoard = {} as WinningBoard
 
 // ================================================ ///
 
@@ -91,7 +86,7 @@ const sum = unMarked.reduce((acc, item) => acc as number + item as number, 0 as 
 // Multiply the sum by the lastRound number to get the final value
 console.log("FINAL", sum * lastRound)
 
-function checkWinningBoard(numbers: Number[], boardLines:string[]) {
+function checkWinningBoard(numbers: number[], boardLines:string[]) {
     let match = false;
     boardLines.forEach(item => {
         if (match === false) {
