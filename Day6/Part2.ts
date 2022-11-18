@@ -4,7 +4,7 @@ const lines = text.split("\r\n")
 
 const line = lines[0].trim()
 
-let fish = line.split(',')
+const fish = line.split(',')
 
 const fishMap = new Map<number, number>();
 
