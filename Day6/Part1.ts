@@ -21,7 +21,6 @@ for(let i = 0; i < 80; i++) {
                 break;
         }
     })
-
     fish = copyFish
 }
 
