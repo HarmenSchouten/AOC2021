@@ -40,18 +40,16 @@ console.log("TOTALS", lines.reduce((acc, line) => {
     
     // Mappie
     const segmentMap = new Map<number, string>()
-    segmentMap.set(0, zero) // 6
-    segmentMap.set(1, uno) // 2
-    segmentMap.set(2, due) // 5
-    segmentMap.set(3, tres) // 5
-    segmentMap.set(4, quattro) // 4
-    segmentMap.set(5, cinq) // 5
-    segmentMap.set(6, sei) // 6
-    segmentMap.set(7, sette) // 3
-    segmentMap.set(8, otto) // 7
-    segmentMap.set(9, nuvo) // 6
+    segmentMap.set(0, [...zero].sort((a, b) => a > b ? -1 : 1).join('')) // 6
+    segmentMap.set(1, [...uno].sort((a, b) => a > b ? -1 : 1).join('')) // 2
+    segmentMap.set(2, [...due].sort((a, b) => a > b ? -1 : 1).join('')) // 5
+    segmentMap.set(3, [...tres].sort((a, b) => a > b ? -1 : 1).join('')) // 5
+    segmentMap.set(4, [...quattro].sort((a, b) => a > b ? -1 : 1).join('')) // 4
+    segmentMap.set(5, [...cinq].sort((a, b) => a > b ? -1 : 1).join('')) // 5
+    segmentMap.set(6, [...sei].sort((a, b) => a > b ? -1 : 1).join('')) // 6
+    segmentMap.set(7, [...sette].sort((a, b) => a > b ? -1 : 1).join('')) // 3
+    segmentMap.set(8, [...otto].sort((a, b) => a > b ? -1 : 1).join('')) // 7
+    segmentMap.set(9, [...nuvo].sort((a, b) => a > b ? -1 : 1).join('')) // 6
 
     // For each item value, the bits are shuffled
-
-    return acc + outputValues.reduce((subAcc, value) => subAcc + getByValue(segmentMap, value)!, 0)
-}, 0))
+    return acc + Number(outputValues.reduce((subAcc, value) => subAcc + getByValue(segmentMap, [...value].sort((a, b) => a > b ? -1 : 1).join(""))!.toString(), ''))}, 0))
