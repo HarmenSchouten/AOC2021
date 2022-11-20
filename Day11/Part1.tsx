@@ -113,11 +113,17 @@ function ResetFlashes(input:number[][]):number[][] {
     }, [] as number[])], [] as number[][])
 }
 
+function EqualityIsWhatWeLiveFor(input:number[][]):boolean {
+    return input.every((line, index) => line.every((val, i, arr) => val === arr[0]))
+}
+
 // ======================================= //
 
 let updatedInput = [...input]
 for (let i = 0; i < 100; i++) {
     updatedInput = RunStep(updatedInput)
 }
+
+console.log(updatedInput)
 
 console.log("COUNT", flashCounter)
