@@ -34,7 +34,7 @@ const maxX = coords.reduce((acc, item) => item.x > acc ? item.x : acc, 0)
 const maxY = coords.reduce((acc, item) => item.y > acc ? item.y : acc, 0)
 
 const buildGrid = (x:number, y:number) => {
-    let grid:string[][] = []
+    const grid:string[][] = []
     
     for(let i = 0; i <= y; i++)
     for(let j = 0; j <= x; j++) {
