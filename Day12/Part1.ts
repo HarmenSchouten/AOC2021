@@ -19,12 +19,8 @@ function GetNextPathSections(start:string[]) {
             const item = getItem(lastItem, matchingItem)
             if (isLowerCase(item) && hasItem(item, [...start])) {
                 return [...acc]
-            }
-
-            if (matchingItem[0] === lastItem) {
-                return [...acc, [...start, matchingItem[1]]]
             } else {
-                return [...acc, [...start, matchingItem[0]]]
+                return [...acc, [...start, item]]
             }
         }, [] as string[][])
     }
