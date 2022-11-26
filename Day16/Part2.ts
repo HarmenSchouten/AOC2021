@@ -1,3 +1,6 @@
+/**
+ * Define the package type
+ */
 type Package = {
     version: number
     type: number
@@ -12,48 +15,52 @@ type Package = {
 const text = await Deno.readTextFile("./Day16/input.txt")
 const line = text.split("\r\n")[0]!
 
+/**
+ * Parse the given input to a binary array
+ */
 const binary = [...line].map(char => ToBinary(char)).join("")
 
-const decPackage = DecodePackage([...binary])
+/**
+ * Decode and evaluate the input
+ */
+console.log("Answer", EvaluateExpression(DecodePackage([...binary])))
 
-console.log(EvaluateExpression(decPackage))
-
+/**
+ * Decode a binary string to a package typed object.
+ * This function is being called recursively to add subpackages to a 
+ * parent package
+ * @param binary The input binary string
+ * @returns A package object
+ */
 function DecodePackage(binary:string[]) : Package {
+    // Setup the base
     const base = {} as Package;
-    
-    const packageVersion = GetNumber(binary.splice(0, 3).join(""))
-    base.version = packageVersion
+    base.version = GetNumber(binary.splice(0, 3).join(""))
+    base.type = GetNumber(binary.splice(0, 3).join(""))
 
-    const packageType = GetNumber(binary.splice(0, 3).join(""))
-    base.type = packageType
-
-    switch (packageType) {
+    switch (base.type) {
         case 4:
             {
                 const litValue = DecodeLiteralValue(binary)
                 return {
-                    version: packageVersion,
-                    type: packageType,
+                    ...base,
                     literalValue: GetNumber(litValue.val),
                     remaining: litValue.remaining
                 }
             }
         default:
             {
-                const lengthTypeId = GetNumber(binary.splice(0, 1).join(""))
-                base.lengthTypeId = lengthTypeId
-                switch (lengthTypeId) {
+                base.lengthTypeId = GetNumber(binary.splice(0, 1).join(""))
+                switch (base.lengthTypeId) {
                     case 0:
                         {
-                            const l15 = GetNumber(binary.splice(0, 15).join(""))
-                            base.subLength = l15
+                            base.subLength = GetNumber(binary.splice(0, 15).join(""))
                             base.subFilter = 'bits'
                             break;
                         }
                     case 1:
                         {
-                            const l11 = GetNumber(binary.splice(0, 11).join(""))
-                            base.subLength = l11
+                            base.subLength = GetNumber(binary.splice(0, 11).join(""))
                             base.subFilter = 'packages'
                             break;
                         }
@@ -63,6 +70,8 @@ function DecodePackage(binary:string[]) : Package {
 
     let remaining = binary
 
+    // There's a better way of doing this, however I don't want to
+    // think of one right now. 
     if (base.subLength) {
         if (base.subFilter === 'bits') {
             base.subPackages = []
@@ -100,6 +109,13 @@ function DecodePackage(binary:string[]) : Package {
     return {...base, remaining: remaining}
 }
 
+/**
+ * Parse a given char to its binary representation. Again,
+ * there's most likely a way better way of parsing the input
+ * to a binary string. Maybe another time...
+ * @param char The input character
+ * @returns A string with 4 binary digits
+ */
 function ToBinary(char:string) {
     switch(char) {
         case '0':
@@ -139,10 +155,22 @@ function ToBinary(char:string) {
     }
 }
 
+/**
+ * Get a number from a binary string
+ * @param binary The input binary string
+ * @returns A number
+ */
 function GetNumber(binary:string) {
     return parseInt(binary, 2)
 }
 
+/**
+ * Decode a literal value element, returning the value
+ * and the remaining elements
+ * @param binary The input binary string
+ * @returns The value of the literal element and the remaining 
+ * binary string
+ */
 function DecodeLiteralValue(binary:string[]):{val:string, remaining:string[]} {
     const moduleStart = binary.splice(0,1)
 
@@ -153,42 +181,47 @@ function DecodeLiteralValue(binary:string[]):{val:string, remaining:string[]} {
     return {val: val, remaining: binary}
 }
 
-function EvaluateExpression(decPackage:Package):number {
-    switch(decPackage.type) {
+/**
+ * Evaluate the expression of a packet using a recursive mechanism
+ * @param packet A package
+ * @returns A number containing the result of all evaluations
+ */
+function EvaluateExpression(packet:Package):number {
+    switch(packet.type) {
         case 0:
             {
-                return decPackage.subPackages!.reduce((acc, item) => {
+                return packet.subPackages!.reduce((acc, item) => {
                     return acc += EvaluateExpression(item)
                 }, 0)
             }
         case 1:
             {
-                return decPackage.subPackages!.reduce((acc, item) => {
+                return packet.subPackages!.reduce((acc, item) => {
                     return acc *= EvaluateExpression(item)
                 }, 1)
             }
         case 2:
             {
-                return decPackage.subPackages!.reduce((acc, item) => {
+                return packet.subPackages!.reduce((acc, item) => {
                     const val = EvaluateExpression(item)
                     return val < acc ? val : acc
                 }, Number.MAX_SAFE_INTEGER)
             }
         case 3:
             {
-                return decPackage.subPackages!.reduce((acc, item) => {
+                return packet.subPackages!.reduce((acc, item) => {
                     const val = EvaluateExpression(item)
                     return val > acc ? val : acc
                 }, -Number.MAX_SAFE_INTEGER)
             }
         case 4:
-            return decPackage.literalValue!
+            return packet.literalValue!
         case 5:
-            return EvaluateExpression(decPackage.subPackages![0]) > EvaluateExpression(decPackage.subPackages![1]) ? 1 : 0
+            return EvaluateExpression(packet.subPackages![0]) > EvaluateExpression(packet.subPackages![1]) ? 1 : 0
         case 6: 
-            return EvaluateExpression(decPackage.subPackages![0]) < EvaluateExpression(decPackage.subPackages![1]) ? 1 : 0
+            return EvaluateExpression(packet.subPackages![0]) < EvaluateExpression(packet.subPackages![1]) ? 1 : 0
         case 7:
-            return EvaluateExpression(decPackage.subPackages![0]) === EvaluateExpression(decPackage.subPackages![1]) ? 1 : 0
+            return EvaluateExpression(packet.subPackages![0]) === EvaluateExpression(packet.subPackages![1]) ? 1 : 0
         default:
             console.warn("Huh what")
             return 0;
