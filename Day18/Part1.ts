@@ -5,7 +5,7 @@ type DepthData = {
 }
 
 const text = await Deno.readTextFile("./Day18/input.txt")
-const lines = text.split("\r\n").map(line => JSON.parse(line)) as NestedNumbers
+const lines = text.split("\r\n").map(line => JSON.parse(line) as NestedNumbers)
 
 /**
  * Create a new nested array by combining two input arrays
@@ -23,8 +23,8 @@ const Add = (a: NestedNumbers, b: NestedNumbers) => {
  * @param input The input array
  * @returns A boolean whether we need reducing or not
  */
-const NeedsReducing = (input:NestedNumbers):number[] | undefined => {
-    const tracker = [] as DepthData[]
+const NeedsReducing = (input:NestedNumbers):NestedNumbers | boolean => {
+    const tracker = [] as DepthData[];
 
     const Tester = (input:NestedNumbers, depth:number) => {
         tracker.push({
@@ -34,39 +34,47 @@ const NeedsReducing = (input:NestedNumbers):number[] | undefined => {
         
         for (let i = 0; i < input.length; i++) {
             if (Array.isArray(input[i])) {
-                Tester(input[i], depth + 1)
+                Tester(input[i] as NestedNumbers, depth + 1)
             }
         }
     }
 
-    Tester(input, 0)
-
-    return tracker.pop()?.data as number[]
+    Tester(input, 0);
+    const last = tracker.find(item => item.depth >= 4)
+    if (last) {
+        return last.data as number[]
+    } else {
+        return false;
+    }
 }
 
-const ReduceItem = (input: number[], base:NestedNumbers) => {
+const ReduceItem = (input: number[], base:NestedNumbers):NestedNumbers => {
     let stringified = JSON.stringify(base)
-    const index = stringified.indexOf(JSON.stringify(input))
-    const endIndex = index + JSON.stringify(input).length
+
+    const {index, endIndex} = GetStartEndIndex(JSON.stringify(input), stringified)
     
     const previousIndex = GetPreviousIndex(stringified, index)
     if (previousIndex) {
-        stringified = UpdateAtIndex(stringified, previousIndex, previousIndex + 2, (Number(stringified[previousIndex]) + input[0]).toString())
+        stringified = UpdateAtIndex(stringified, previousIndex, previousIndex + 1, (Number(stringified[previousIndex]) + input[0]).toString())
     }
+
+    const {index:index1, endIndex:endIndex1} = GetStartEndIndex(JSON.stringify(input), stringified)
         
-    const nextIndex = GetNextIndex(stringified, endIndex)
+    const nextIndex = GetNextIndex(stringified, endIndex1)
     if (nextIndex) {
-        stringified = UpdateAtIndex(stringified, endIndex, endIndex + 2, (Number(stringified[nextIndex]) + input[1]).toString())
-        console.log(stringified)
+        stringified = UpdateAtIndex(stringified, nextIndex, nextIndex + 1, (Number(stringified[nextIndex]) + input[1]).toString())
     }
 
-    console.log(stringified)
+    const {index:index2, endIndex:endIndex2} = GetStartEndIndex(JSON.stringify(input), stringified)
+    stringified = ReplaceAtIndex(stringified, index2, endIndex2)
+    return JSON.parse(stringified) as NestedNumbers
+}
 
-    const reCalcIndex = stringified.indexOf(JSON.stringify(input))
-    const reCalcEndIndex = reCalcIndex + (JSON.stringify(input).length - 1)
-    stringified = ReplaceAtIndex(stringified, reCalcIndex, reCalcEndIndex)
+const GetStartEndIndex = (substring:string, base:string) => {
+    const index = base.indexOf(substring)
+    const endIndex = index + substring.length
 
-    console.log(stringified)
+    return {index, endIndex} as const
 }
 
 const GetPreviousIndex = (base:string, index:number):number | undefined => {
@@ -87,7 +95,7 @@ const GetPreviousIndex = (base:string, index:number):number | undefined => {
 const GetNextIndex = (base:string, index:number):number|undefined => {
     let nextIndex = undefined
     while (true) {
-        for (let i = index; i <= base.length; i++) {
+        for (let i = index; i < base.length; i++) {
             const possibleNum = Number(base[i])
             if (!isNaN(possibleNum)) {
                 nextIndex = i
@@ -105,18 +113,98 @@ const UpdateAtIndex = (base:string, start:number, end:number, update: string) =>
 
 const ReplaceAtIndex = (base:string, start:number, end:number) => {
     let update = "";
-    console.log(base[start - 1], base[end + 1])
-    if (!isNaN(Number(base[start - 1])) && isNaN(Number(base[end + 1]))) {
+    if (!isNaN(Number(base[start])) && isNaN(Number(base[end]))) {
         update = ",0"
-    } else {
+    } else if (isNaN(Number(base[start])) && !isNaN(Number(base[end]))) {
         update = "0,"
+    } else {
+        update = "0"
     }
-
     return base.substring(0, start) + update + base.substring(end)
 }
 
-const input = [7,[6,[5,[4,[3,2]]]]]
-const input2 = [[[[[9,8],1],2],3],4]
-const needsReducing = NeedsReducing(input)
+const Reduce = (input: NestedNumbers):NestedNumbers => {
 
-ReduceItem(needsReducing!, input2)
+    const test = NeedsReducing(input)
+
+    if (test) {
+        const updated = ReduceItem(test as number[], input)
+        console.log("REDUCE UPDATE", JSON.stringify(updated))
+        return Reduce(updated)
+    } else {
+        return input
+    }
+}
+
+const NeedsSplitting = (input: NestedNumbers):number|boolean => {
+    const stringified = JSON.stringify(input)
+    let test = "";
+    [...stringified].forEach((val, index, arr) => {
+        if (!isNaN(Number(val))) {
+            const next = arr[index + 1]
+            if (!isNaN(Number(next))) {
+                test = `${val}` + `${next}`
+                return;
+            }
+        }
+    })
+
+    if (test.trim() !== "") {
+        return Number(test)
+    } else {
+        return false
+    }
+}
+
+const SplitItem = (input:number, base:NestedNumbers):NestedNumbers => {
+    const replacement = JSON.stringify([Math.floor(input / 2), Math.ceil(input / 2)])
+
+    let stringified = JSON.stringify(base);
+    const index = stringified.indexOf(input.toString())
+
+    stringified = stringified.substring(0, index) + replacement + stringified.substring(index + input.toString().length)
+    return JSON.parse(stringified) as NestedNumbers
+}
+
+const Split = (input:NestedNumbers):NestedNumbers => {
+    const test = NeedsSplitting(input)
+
+    if (test) {
+        input = SplitItem(test as number, input)
+        return Split(input)
+    } else {
+        return input
+    }
+}
+
+const RunStep = (input:NestedNumbers):NestedNumbers => {
+    let copyInput = input
+    let checker = true;
+    while (checker) {
+        if (copyInput && NeedsReducing(copyInput)) {
+            copyInput = Reduce(copyInput)
+            console.log("REDUCED", JSON.stringify(copyInput))
+        }
+        if (copyInput && NeedsSplitting(copyInput)) {
+            copyInput = Split(copyInput)
+            console.log("SPLITTED", JSON.stringify(copyInput))
+        }
+
+        if (copyInput && !NeedsReducing(copyInput) && !NeedsSplitting(copyInput)) {
+            checker = false;
+        }
+    }
+    return copyInput
+}
+
+const first = lines.shift()
+const test = lines.reduce((acc, line, index) => {
+    const sum = Add(acc, line)
+    const step = RunStep(sum)
+    console.log(index, JSON.stringify(step))
+    return step
+}, first as NestedNumbers)
+
+console.log(JSON.stringify(test))
+
+//console.log(JSON.stringify(Reduce([[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]] as NestedNumbers)))
