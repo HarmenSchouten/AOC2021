@@ -77,6 +77,7 @@ const GetStartEndIndex = (substring:string, base:string) => {
     return {index, endIndex} as const
 }
 
+// @TODO: Works some magic with double digits
 const GetPreviousIndex = (base:string, index:number):number | undefined => {
     let previousIndex = undefined
     while (true) {
@@ -92,6 +93,7 @@ const GetPreviousIndex = (base:string, index:number):number | undefined => {
     return previousIndex
 }
 
+// @TODO: Works some magic with double digits
 const GetNextIndex = (base:string, index:number):number|undefined => {
     let nextIndex = undefined
     while (true) {
