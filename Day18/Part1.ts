@@ -206,7 +206,7 @@ const firstLine = run(JSON.parse(lines.shift()!) as NestedNumbers)
 // Then loop through each line, reduce each line and then sum it with the accumulator.
 // Then try to reduce and split the result and return the final result
 const test = lines.reduce((acc, item) => {
-    const concat = sum(run(acc), run(JSON.parse(item) as NestedNumbers))
+    const concat = sum(acc, run(JSON.parse(item) as NestedNumbers))
     const reduced = run(concat)
     return reduced;
 }, firstLine)
