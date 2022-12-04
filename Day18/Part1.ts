@@ -5,7 +5,7 @@ type NestedNumbers = Array<number> | Array<NestedNumbers | number>
 
 const sum = (arr1: NestedNumbers, arr2: NestedNumbers) => [arr1, arr2];
 
-const explode = (input:any) => {
+const explode = (input:NestedNumbers) => {
 
     const stringified = JSON.stringify(input);
 
@@ -115,7 +115,7 @@ const split = (input:NestedNumbers) => {
     }
 }
 
-const reduce = (input:any) => {
+const reduce = (input:NestedNumbers) => {
 
     let copy = input;
     let explodeChecker = true;
@@ -129,20 +129,20 @@ const reduce = (input:any) => {
     return copy
 }
 
-const splitter = (input:any) => {
-    let copy = input;
-    let splitChecker = true;
+// const splitter = (input:any) => {
+//     let copy = input;
+//     let splitChecker = true;
 
-    while (splitChecker) {
-        const splitt = split(copy);
-        copy = splitt.result;
-        splitChecker = splitt.didSplit;
-    }
+//     while (splitChecker) {
+//         const splitt = split(copy);
+//         copy = splitt.result;
+//         splitChecker = splitt.didSplit;
+//     }
 
-    return copy;
-}
+//     return copy;
+// }
 
-const run = (input:any) => {
+const run = (input:NestedNumbers) => {
     let copy = input;
     let continueChecking = true;
 
