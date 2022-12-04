@@ -140,11 +140,16 @@ const explode = (input:NestedNumbers) => {
  * the first number is the original number divided by 2 - rounded down.
  * The 2nd number is the original number divided by 2 - rounded up.
  * @param input The input data
- * @returns The splitted input data
+ * @returns The splittedetetdet input data
  */
 const split = (input:NestedNumbers) => {
     const stringified = JSON.stringify(input);
-    const firstMatch = stringified.match(/\d+/g)?.map(item => Number(item)).sort((a, b) => b - a).filter(n => n >= 10).shift();
+    const firstMatch = stringified.
+                        match(/\d+/g)?.
+                        map(item => Number(item)).
+                        sort((a, b) => b - a).
+                        filter(n => n >= 10).
+                        shift();
     
     return {
         didSplit: firstMatch !== undefined,
