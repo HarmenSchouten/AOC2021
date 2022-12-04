@@ -3,42 +3,65 @@ const lines = text.split("\r\n");
 
 type NestedNumbers = Array<number> | Array<NestedNumbers | number>
 
+/**
+ * Combine two arrays by creating a new array with the first
+ * array and the second array
+ * @param arr1 The first input val
+ * @param arr2 The 2nd input val
+ * @returns A new array containing both input values
+ */
 const sum = (arr1: NestedNumbers, arr2: NestedNumbers) => [arr1, arr2];
 
+/**
+ * Explode the input by searching for a valid pair on depth level 5 or lower
+ * Then add the first number of that pair to the first number on the left side of this pair
+ * Then add the second number of that pair to the first number on the right side of this pair
+ * Then, replace the pair with a 0
+ * @param input The input data
+ * @returns A one time exploded input as a result
+ */
 const explode = (input:NestedNumbers) => {
 
+    // Stringify the inpujt
     const stringified = JSON.stringify(input);
 
     console.log(stringified)
 
+    // Set our initial depth level
     let depth = 0;
+
+    // Loop through each character in the stringified input
     for (let i = 0; i < stringified.length; i++) {
+
+        // If we encounter a [ we increase the depth level
         if(stringified[i] === "[") {
             depth++;	
+
+            // If we hit depth level 5 or greater, explode the first item
             if (depth >= 5) {
-                // Identify our pair as a number array
+
+                // First, identify our pair by further looking into the array
+                // Add the found numbers to a string. When we hit a , or a ] bracket,
+                // we stop and add the number to the array
                 const pair = [] as number[]
                 let number = "";
-                let test = ""
                 for (let j = i; j < stringified.length; j++) {
                     if (stringified[j] === ",") {
-                        test = test + stringified[j];
                         pair.push(Number(number))
                         number = "";
                     } else if (stringified[j] === "]") {
-                        test = test + stringified[j];
                         pair.push(Number(number))
                         number = "";
                         break;
                     } else if (stringified[j] === "[" && stringified[j + 1] === "[") {
-                        test = test + stringified[j];
                         number += stringified[j];
                         break
                     } else if (stringified[j] !== "[") {
-                        test = test + stringified[j];
                         number += stringified[j];
                     } 
                 }
+
+                // Validate that we have a valid pair
                 if (number === "[" || pair.length !== 2) {
                     console.log("FAIL", number, pair)
                     continue;
@@ -46,9 +69,10 @@ const explode = (input:NestedNumbers) => {
 
                 console.log(pair)
                 
+                // Find the first number on the left side of the pair by looping backwards
+                // through the stringified input. When we hit a non-number character, we stop
                 let leftNumberString = "";
                 let leftNumberStartingIndex = 0;
-                // Find the first number on the left
                 for (let j = i - 1; j >= 0; j--) {
                     if (!isNaN(Number(stringified[j]))) {
                         leftNumberString = stringified[j] + leftNumberString;
@@ -58,19 +82,20 @@ const explode = (input:NestedNumbers) => {
                     }
                 }
 
-                // Update the left number here
                 let left = stringified.slice(0, i);
+                
+                // If we found a number on the left, slice up the left side of the input
+                // and add the first number of the pair to the left number
                 if (leftNumberString !== "") {
                     left = stringified.slice(0, leftNumberStartingIndex) + (Number(leftNumberString) + pair[0]) + stringified.slice(leftNumberStartingIndex + leftNumberString.length, i);
                 }
 
-                // Find the first number on the right
+                // Find the first number on the right side of the pair by looping further
+                // through the stringified input. When we hit a non-number character, we stop
                 let rightNumberString = "";
                 let rightNumberStartingIndex = 0;
                 for (let j = i + JSON.stringify(pair).length; j < stringified.length; j++) {
                     if (!isNaN(Number(stringified[j]))) {
-                        // Check how much further we must go, then replace it with the sum
-                        // of this number + the first number of our par
                         rightNumberString = rightNumberString + stringified[j];
                         rightNumberStartingIndex = j;
                     } else if (isNaN(Number(stringified[j])) && rightNumberString !== "") {
@@ -78,33 +103,47 @@ const explode = (input:NestedNumbers) => {
                     }
                 }
                 
-                // Update the right number here
                 let right = stringified.slice((i + JSON.stringify(pair).length));
+
+                // If we found a number on the right, slice up the right side of the input
+                // and add the first number of the pair to the right number
                 if (rightNumberString !== "") {
                     right = stringified.slice((i + JSON.stringify(pair).length), (rightNumberStartingIndex - rightNumberString.length) + 1) + (Number(rightNumberString) + pair[1]) + stringified.slice(((rightNumberString.length >= 2
                         ? rightNumberStartingIndex - 1
                         : rightNumberStartingIndex) + rightNumberString.length));
                 }
+
+                // Return the result, being the updated left side, the pair replaced with a 0
+                // and the updated right side
                 return {
                     didReduce: true,
                     result: JSON.parse(left + 0 + right)
                 };
             }
-        } else if (stringified[i] === "]") {
+        } 
+        // If we encounter a ] we decrease the depth level
+        else if (stringified[i] === "]") {
             depth--
         }
     }
 
+    // If we didn't hit an early return, that means we didn't make it to depth level 5
+    // So we return the input as is
     return {
         didReduce: false,
         result: input
     }
 }
 
+/**
+ * Split the first occurrence of a number of 10 or greater into a new pair, 
+ * the first number is the original number divided by 2 - rounded down.
+ * The 2nd number is the original number divided by 2 - rounded up.
+ * @param input The input data
+ * @returns The splitted input data
+ */
 const split = (input:NestedNumbers) => {
-
     const stringified = JSON.stringify(input);
-
     const firstMatch = stringified.match(/\d+/g)?.map(item => Number(item)).sort((a, b) => b - a).filter(n => n >= 10).shift();
     
     return {
@@ -117,52 +156,52 @@ const split = (input:NestedNumbers) => {
 
 const reduce = (input:NestedNumbers) => {
 
+    // Create a copy of the input
     let copy = input;
-    let explodeChecker = true;
 
-    while (explodeChecker) {
+    // While we can explode item in the input, keep exploding
+    // until we can't explode anymore
+    while (true) {
         const reduced = explode(copy);
         copy = reduced.result
-        explodeChecker = reduced.didReduce;
+        
+        if (!reduced.didReduce) {
+            break;
+        }
     }
 
     return copy
 }
 
-// const splitter = (input:any) => {
-//     let copy = input;
-//     let splitChecker = true;
-
-//     while (splitChecker) {
-//         const splitt = split(copy);
-//         copy = splitt.result;
-//         splitChecker = splitt.didSplit;
-//     }
-
-//     return copy;
-// }
-
 const run = (input:NestedNumbers) => {
-    let copy = input;
-    let continueChecking = true;
 
-    while (continueChecking) {
+    // Create a copy of the input
+    let copy = input;
+
+    while (true) {
+        // First try to reduce the input until there are no no more explode actions
         const copy2 = reduce(copy);
         
-        const splitt = split(copy2);
-        const copy3 = splitt.result;
+        // Then split the input once
+        const splitItBoy = split(copy2).result;
 
-        continueChecking = JSON.stringify(copy3) !== JSON.stringify(copy);
+        // If we didn't split AND didn't explode, we can stop
+        if (JSON.stringify(splitItBoy) === JSON.stringify(copy)) {
+            break;
+        }
 
-        copy = copy3;
+        copy = splitItBoy;
     }
-
     return copy;
 }
 
-const firstLine = JSON.parse(lines.shift()!) as NestedNumbers
+// Get the first line as a baseline, reduce it and split it if needed
+const firstLine = run(JSON.parse(lines.shift()!) as NestedNumbers)
+
+// Then loop through each line, reduce each line and then sum it with the accumulator.
+// Then try to reduce and split the result and return the final result
 const test = lines.reduce((acc, item) => {
-    const concat = sum(acc, JSON.parse(item) as NestedNumbers)
+    const concat = sum(run(acc), run(JSON.parse(item) as NestedNumbers))
     const reduced = run(concat)
     return reduced;
 }, firstLine)
