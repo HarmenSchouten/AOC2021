@@ -2,164 +2,169 @@ const text = await Deno.readTextFile("./Day18/input.txt")
 const lines = text.split("\r\n");
 
 type NestedNumbers = Array<number> | Array<NestedNumbers | number>
-type DepthData = {
-    depth: number,
-    data: NestedNumbers,
-}
 
 const sum = (arr1: NestedNumbers, arr2: NestedNumbers) => [arr1, arr2];
 
-const needsReducing = (arr: NestedNumbers) => {
-  // helper function to traverse the array and find the first array at depth level 4 or greater
-  function traverseArray(arr: NestedNumbers, depth: number): DepthData | undefined {
-    // if the depth is 4 or greater and the current element is an array, return the depth data
-    if (depth >= 4 && Array.isArray(arr)) {
-        return {
-            depth: depth,
-            data: arr
-        };
-    }
+const explode = (input:any) => {
 
-    // iterate over the elements in the array
-    for (let i = 0; i < arr.length; i++) {
-        // if the element is an array, traverse it recursively
-        if (Array.isArray(arr[i])) {
-            const result = traverseArray(arr[i] as NestedNumbers, depth + 1);
-            // if the result is not undefined, return it
-            if (result !== undefined) {
-                return result;
+    const stringified = JSON.stringify(input);
+
+    console.log(stringified)
+
+    let depth = 0;
+    for (let i = 0; i < stringified.length; i++) {
+        if(stringified[i] === "[") {
+            depth++;	
+            if (depth >= 5) {
+                // Identify our pair as a number array
+                const pair = [] as number[]
+                let number = "";
+                let test = ""
+                for (let j = i; j < stringified.length; j++) {
+                    if (stringified[j] === ",") {
+                        test = test + stringified[j];
+                        pair.push(Number(number))
+                        number = "";
+                    } else if (stringified[j] === "]") {
+                        test = test + stringified[j];
+                        pair.push(Number(number))
+                        number = "";
+                        break;
+                    } else if (stringified[j] === "[" && stringified[j + 1] === "[") {
+                        test = test + stringified[j];
+                        number += stringified[j];
+                        break
+                    } else if (stringified[j] !== "[") {
+                        test = test + stringified[j];
+                        number += stringified[j];
+                    } 
+                }
+                if (number === "[" || pair.length !== 2) {
+                    console.log("FAIL", number, pair)
+                    continue;
+                }
+
+                console.log(pair)
+                
+                let leftNumberString = "";
+                let leftNumberStartingIndex = 0;
+                // Find the first number on the left
+                for (let j = i - 1; j >= 0; j--) {
+                    if (!isNaN(Number(stringified[j]))) {
+                        leftNumberString = stringified[j] + leftNumberString;
+                        leftNumberStartingIndex = j;
+                    } else if (isNaN(Number(stringified[j])) && leftNumberString !== "") {
+                        break;
+                    }
+                }
+
+                // Update the left number here
+                let left = stringified.slice(0, i);
+                if (leftNumberString !== "") {
+                    left = stringified.slice(0, leftNumberStartingIndex) + (Number(leftNumberString) + pair[0]) + stringified.slice(leftNumberStartingIndex + leftNumberString.length, i);
+                }
+
+                // Find the first number on the right
+                let rightNumberString = "";
+                let rightNumberStartingIndex = 0;
+                for (let j = i + JSON.stringify(pair).length; j < stringified.length; j++) {
+                    if (!isNaN(Number(stringified[j]))) {
+                        // Check how much further we must go, then replace it with the sum
+                        // of this number + the first number of our par
+                        rightNumberString = rightNumberString + stringified[j];
+                        rightNumberStartingIndex = j;
+                    } else if (isNaN(Number(stringified[j])) && rightNumberString !== "") {
+                        break;
+                    }
+                }
+                
+                // Update the right number here
+                let right = stringified.slice((i + JSON.stringify(pair).length));
+                if (rightNumberString !== "") {
+                    right = stringified.slice((i + JSON.stringify(pair).length), (rightNumberStartingIndex - rightNumberString.length) + 1) + (Number(rightNumberString) + pair[1]) + stringified.slice(((rightNumberString.length >= 2
+                        ? rightNumberStartingIndex - 1
+                        : rightNumberStartingIndex) + rightNumberString.length));
+                }
+                return {
+                    didReduce: true,
+                    result: JSON.parse(left + 0 + right)
+                };
             }
+        } else if (stringified[i] === "]") {
+            depth--
         }
     }
 
-    // if no array at depth level 4 or greater was found, return undefined
-    return undefined;
-}
-
-// start traversing the array from depth level 0
-return traverseArray(arr, 0);
-}
-
-const needsSplitting = (arr: NestedNumbers) => {
-    const stringified = JSON.stringify(arr);
-
-    return stringified.match(/\d+/g)?.map(item => Number(item)).sort((a, b) => b - a).filter(n => n >= 10).shift();
-}
-
-function getIndicesOf(searchStr:string, str:string) {
-    const searchStrLen = searchStr.length;
-    if (searchStrLen == 0) {
-        return [];
+    return {
+        didReduce: false,
+        result: input
     }
-    let startIndex = 0, index, indices = [];
-    while ((index = str.indexOf(searchStr, startIndex)) > -1) {
-        indices.push(index);
-        startIndex = index + searchStrLen;
-    }
-    return indices;
 }
 
-const GetCorrectIndice = (input: number[], base: NestedNumbers) => {
-    const indices = getIndicesOf(JSON.stringify(input), JSON.stringify(base));
+const split = (input:NestedNumbers) => {
 
-    return indices.filter(item => {
-        const left = JSON.stringify(base).slice(0, item).replace(/\d/g, "");
-        const countert = [...left].reduce((acc, curr) => {
-            if (curr === "[") {
-                return acc += 1
-            } else if (curr === "]") {
-                return acc -= 1
-            }
-            return acc
-        }, 0)
-        return countert >= 4
-    }).shift()
-}
+    const stringified = JSON.stringify(input);
 
-const reduceItem = (input: number[], base: NestedNumbers) => {
+    const firstMatch = stringified.match(/\d+/g)?.map(item => Number(item)).sort((a, b) => b - a).filter(n => n >= 10).shift();
     
-    const startIndex = GetCorrectIndice(input, base)!
-    
-    const stringified = JSON.stringify(base);
-    const endIndex = (startIndex ) + JSON.stringify(input).length;
-
-    let left = stringified.slice(0, startIndex);
-    let right = stringified.slice(endIndex);
-
-    const previousNumber = left.match(/\d+/g)?.pop();
-    const nextNumber = right.match(/\d+/g)?.shift()
-    if (previousNumber) {
-        const lastIndex = left.lastIndexOf(previousNumber as string);
-        left = left.slice(0, lastIndex) + (Number(previousNumber) + input[0]).toString() + left.slice(lastIndex + previousNumber.length);  
+    return {
+        didSplit: firstMatch !== undefined,
+        result: firstMatch !== undefined 
+            ? JSON.parse(stringified.replace(firstMatch.toString(), `[${Math.floor(firstMatch / 2)}, ${Math.ceil(firstMatch / 2)}]`)) 
+            : input
     }
-
-    if (nextNumber) {
-        const nextIndex = right.indexOf(nextNumber as string);
-        right = right.slice(0, nextIndex) + (Number(nextNumber) + input[1]).toString() + right.slice(nextIndex + (nextNumber.length));
-    }
-
-    // console.log(left+0+right)
-
-    return JSON.parse(left + 0 + right)
 }
 
-const reduce = (base: NestedNumbers) => {
-    let copy = base;
-    let item = needsReducing(copy);
-    while (item) {
-        copy = reduceItem(item.data as number[], copy);
-        item = needsReducing(copy);
-    }
+const reduce = (input:any) => {
 
-    return copy;
-}
+    let copy = input;
+    let explodeChecker = true;
 
-const splitItem = (input: number, base: NestedNumbers) => {
-    const stringified = JSON.stringify(base);
-
-    return JSON.parse(stringified.replace(input.toString(), `[${Math.floor(input / 2)}, ${Math.ceil(input / 2)}]`))
-}
-
-const split = (base: NestedNumbers) => {
-    let copy = base;
-    let item = needsSplitting(copy);
-    while (item) {
-        copy = splitItem(item, copy);
-        item = needsSplitting(copy);
-    }
-
-    return copy;
-}
-
-// Run function as long as we need to split or reduce
-const run = (base: NestedNumbers) => {
-    let copy = base;
-    let continueChecking = true;
-
-    while (continueChecking) {
-        const needToReduce = needsReducing(copy);
-        if (needToReduce) {
-            copy = reduce(copy);
-        }
-
-        const needToSplit = needsSplitting(copy);
-        if (needToSplit) {
-            copy = split(copy);
-        }
-
-        console.log(JSON.stringify(copy))
-
-        continueChecking = needsSplitting(copy) !== undefined || needsReducing(copy) !== undefined;
+    while (explodeChecker) {
+        const reduced = explode(copy);
+        copy = reduced.result
+        explodeChecker = reduced.didReduce;
     }
 
     return copy
 }
 
+const splitter = (input:any) => {
+    let copy = input;
+    let splitChecker = true;
+
+    while (splitChecker) {
+        const splitt = split(copy);
+        copy = splitt.result;
+        splitChecker = splitt.didSplit;
+    }
+
+    return copy;
+}
+
+const run = (input:any) => {
+    let copy = input;
+    let continueChecking = true;
+
+    while (continueChecking) {
+        const copy2 = reduce(copy);
+        
+        const splitt = split(copy2);
+        const copy3 = splitt.result;
+
+        continueChecking = JSON.stringify(copy3) !== JSON.stringify(copy);
+
+        copy = copy3;
+    }
+
+    return copy;
+}
+
 const firstLine = JSON.parse(lines.shift()!) as NestedNumbers
+const test = lines.reduce((acc, item) => {
+    const concat = sum(acc, JSON.parse(item) as NestedNumbers)
+    const reduced = run(concat)
+    return reduced;
+}, firstLine)
 
-const reduceLines = lines.reduce((acc, line) => {
-    const concat = sum(acc, JSON.parse(line) as NestedNumbers)
-    return run(concat);
-}, firstLine);
-
-console.log(JSON.stringify(reduceLines))
+console.log(JSON.stringify(test))
