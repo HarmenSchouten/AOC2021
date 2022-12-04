@@ -1,7 +1,7 @@
 const text = await Deno.readTextFile("./Day18/input.txt")
 const lines = text.split("\r\n");
 
-type NestedNumbers = Array<number> | Array<NestedNumbers | number>
+type NestedNumbers = Array<NestedNumbers | number>
 
 /**
  * Combine two arrays by creating a new array with the first
